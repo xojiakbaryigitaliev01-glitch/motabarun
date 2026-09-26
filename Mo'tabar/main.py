@@ -64,6 +64,7 @@ async def config():
 @app.get("/api/products")
 async def products():
     return [{"id": p["id"], "name": p["name"], "cat": p["cat"], "price": p["price"], "descr": p["descr"],
+             "weight": p.get("weight") or "50 kg",
              "img": f"/api/img/{p['id']}?v={p['photo'][-8:]}" if p["photo"] else (p.get("img") or "")} for p in await db.products()]
 
 
@@ -125,7 +126,7 @@ async def order(o: Order):
         s = p["price"] * i.qty
         total += s
         snap.append({"id": p["id"], "name": p["name"], "qty": i.qty, "price": p["price"]})
-        lines.append(f"• <b>{html.escape(p['name'])}</b> ({html.escape(p['cat'])}) × {i.qty} = {s:,} so'm".replace(",", " "))
+        lines.append(f"• <b>{html.escape(p['name'])}</b> ({html.escape(p['cat'])}, {html.escape(p.get('weight') or '50 kg')}) × {i.qty} = {s:,} so'm".replace(",", " "))
     if not lines:
         raise HTTPException(400, "Savat bo'sh yoki mahsulotlar topilmadi")
     e = html.escape
