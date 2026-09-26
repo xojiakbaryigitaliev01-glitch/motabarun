@@ -28,6 +28,7 @@ class Add(StatesGroup):
     name = State()
     cat = State()
     price = State()
+    weight = State()
     descr = State()
     photo = State()
 
@@ -115,22 +116,31 @@ async def add_price(m, state: FSMContext):
     if p < 1:
         return await m.answer("⚠️ Narxni raqam bilan yozing. Masalan: 295000")
     await state.update_data(price=p)
+    kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="50 kg"), KeyboardButton(text="25 kg")],
+                                       [KeyboardButton(text="1 kg")]], resize_keyboard=True, one_time_keyboard=True)
+    await state.set_state(Add.weight)
+    await m.answer("4/6 ⚖️ Qop og'irligini yozing yoki tanlang (masalan: <b>50 kg</b>)", reply_markup=kb)
+
+
+@admin.message(Add.weight, F.text)
+async def add_weight(m, state: FSMContext):
+    await state.update_data(weight=m.text.strip())
     await state.set_state(Add.descr)
-    await m.answer("4/5 📝 Qisqa tavsif yozing (o'tkazib yuborish uchun <b>-</b> yuboring)")
+    await m.answer("5/6 📝 Qisqa tavsif yozing (o'tkazib yuborish uchun <b>-</b> yuboring)", reply_markup=ReplyKeyboardRemove())
 
 
 @admin.message(Add.descr, F.text)
 async def add_descr(m, state: FSMContext):
     await state.update_data(descr="" if m.text.strip() == "-" else m.text.strip())
     await state.set_state(Add.photo)
-    await m.answer("5/5 🖼 Un rasmini yuboring (o'tkazib yuborish uchun <b>-</b> yuboring)")
+    await m.answer("6/6 🖼 Un rasmini yuboring (o'tkazib yuborish uchun <b>-</b> yuboring)")
 
 
 async def finish(m, state, photo):
     d = await state.get_data()
-    pid = await db.add(d["name"], d["cat"], d["price"], d.get("descr", ""), photo)
+    pid = await db.add(d["name"], d["cat"], d["price"], d.get("weight", "50 kg"), d.get("descr", ""), photo)
     await state.clear()
-    await m.answer(f"✅ <b>{d['name']}</b> qo'shildi! (№{pid})\n{d['cat']} • {d['price']:,} so'm".replace(",", " "), reply_markup=menu())
+    await m.answer(f"✅ <b>{d['name']}</b> qo'shildi! (№{pid})\n{d['cat']} • {d['weight']} • {d['price']:,} so'm".replace(",", " "), reply_markup=menu())
 
 
 @admin.message(Add.photo, F.photo)
@@ -151,7 +161,7 @@ async def lst(c):
         await c.message.answer("Hozircha un yo'q.", reply_markup=menu())
         return await c.answer()
     icon = "🗑" if mode == "del" else "💰"
-    kb = IM(inline_keyboard=[[IB(text=f"{icon} {p['name']} • {p['cat']} • {p['price']:,}".replace(",", " "),
+    kb = IM(inline_keyboard=[[IB(text=f"{icon} {p['name']} • {p['cat']} • {p['weight']} • {p['price']:,}".replace(",", " "),
                                  callback_data=f"{mode}:{p['id']}")] for p in ps])
     await c.message.answer("Tanlang:", reply_markup=kb)
     await c.answer()
