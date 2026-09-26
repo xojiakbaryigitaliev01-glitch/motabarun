@@ -54,8 +54,13 @@ def menu():
 @user.message(Command("start"))
 async def start(m):
     kb = IM(inline_keyboard=[[IB(text="🛒 Do'konni ochish", web_app=WebAppInfo(url=BASE))]])
-    await m.answer("🌾 <b>Mo'tabar Un Markazi</b>ga xush kelibsiz!\n\nSifatli un — to'g'ridan-to'g'ri ombordan. "
-                   "Katalogni ochish uchun tugmani bosing 👇", reply_markup=kb)
+    ism = m.from_user.first_name or "mijoz"
+    await m.answer(
+        f"Assalomu alaykum, {ism}! 👋\n\n"
+        "Mo'tabar Un Markazi botiga xush kelibsiz.\n\n"
+        "Biz 25+ yildan beri Andijon viloyatida eng sifatli unlarni xamyonbop narxlarda yetkazib berib kelyabmiz.\n\n"
+        "🛒 Buyurtma berish uchun pastdagi tugmani bosing.",
+        reply_markup=kb)
     if m.from_user.id in ADMINS:
         await m.answer("👑 Siz adminsiz. Boshqaruv: /admin")
 
